@@ -39,14 +39,13 @@ contract VRFMinting is
     uint64 public subscriptionId;
     bytes32 public keyHash =
         0x79d3d8832d904592c0bf9818b621522c988bb8b0c05cdc3b15aea1b6e8db0c15; // goerli keyhash
-    uint16 public requestConfirmations = 3; // number of confirmations VRF node waits for before fulfilling request
+    uint16 public requestConfirmations = 3; // number of block confirmations VRF service waits for before responding.
     uint32 public callbackGasLimit = 100000; // gas limit when VRF callback rawFulfillRandomWords func in VRFConsumerBaseV2.
     uint32 public numWords = 1; // number of words(uint256 values) in the random word request
 
     mapping(address => uint256) public addressToRequestId;
     mapping(uint256 => RequestStatus) public requestIdToRequestStatus;
     mapping(address => uint256) public totalPublicMintByAddress;
-    mapping(uint256 => bool) public mintedIds;
 
     uint256 public costPublic = 0.069 ether;
     uint256 public maxMintAmountPerWalletPublic = 5;
@@ -115,7 +114,6 @@ contract VRFMinting is
 
         uint256 tokenId = getRandomTokenId(_msgSender());
 
-        mintedIds[tokenId] = true;
         totalPublicMintByAddress[_msgSender()] += _mintAmount;
         _safeMint(_msgSender(), tokenId);
     }
@@ -181,10 +179,6 @@ contract VRFMinting is
         numWords = _numWords;
     }
 
-    function setMintedIdMapping(uint256 _mintedId) internal onlyOwner {
-        mintedIds[_mintedId] = true;
-    }
-
     function getRandomnessRequestState(address requester)
         public
         view
@@ -205,31 +199,31 @@ contract VRFMinting is
         uint256 randomWord = requestStatus.randomWords[0];
         uint256 randomTokenIdFirst = randomWord % maxSupply; // 3333 is not a token id
         uint256 stopValue = randomTokenIdFirst;
-        if (mintedIds[randomTokenIdFirst]) {
+        if (_exists(randomTokenIdFirst)) {
             while (
-                mintedIds[randomTokenIdFirst] &&
+                _exists(randomTokenIdFirst) &&
                 randomTokenIdFirst < maxSupply - 1
             ) {
                 randomTokenIdFirst = (randomTokenIdFirst + 1);
             }
-            if (mintedIds[randomTokenIdFirst]) {
+            if (_exists(randomTokenIdFirst)) {
                 // randomTokenIdFirst should be 3332 in here
                 randomTokenIdFirst = 0;
                 while (
-                    mintedIds[randomTokenIdFirst] &&
+                    _exists(randomTokenIdFirst) &&
                     randomTokenIdFirst < stopValue
                 ) {
                     randomTokenIdFirst = (randomTokenIdFirst + 1);
                 }
-                if (mintedIds[randomTokenIdFirst]) {
+                if (_exists(randomTokenIdFirst)) {
                     revert NoTokenIdAvailable();
-                } else if (!mintedIds[randomTokenIdFirst]) {
+                } else if (!_exists(randomTokenIdFirst)) {
                     randomTokenId = randomTokenIdFirst;
                 }
-            } else if (!mintedIds[randomTokenIdFirst]) {
+            } else if (!_exists(randomTokenIdFirst)) {
                 randomTokenId = randomTokenIdFirst;
             }
-        } else if (!mintedIds[randomTokenIdFirst]) {
+        } else if (!_exists(randomTokenIdFirst)) {
             randomTokenId = randomTokenIdFirst;
         }
     }

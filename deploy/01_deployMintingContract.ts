@@ -8,6 +8,7 @@ import {
   networkConfig,
   VERIFICATION_BLOCK_CONFIRMATIONS,
 } from "../config";
+import { VRFCoordinatorV2Mock } from "../typechain";
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, getNamedAccounts } = hre;
@@ -18,12 +19,13 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!chainId) return;
   let subscriptionId: BigNumber;
   let vrfCoordinatorAddr: string | undefined;
+  let VRFCoordinatorV2Mock: VRFCoordinatorV2Mock;
 
   if (chainId === 31337) {
     const VRFCoordinatorV2MockDepl = await deployments.get(
       "VRFCoordinatorV2Mock"
     );
-    const VRFCoordinatorV2Mock = await ethers.getContractAt(
+    VRFCoordinatorV2Mock = await ethers.getContractAt(
       "VRFCoordinatorV2Mock",
       VRFCoordinatorV2MockDepl.address
     );
@@ -38,7 +40,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     await VRFCoordinatorV2Mock.fundSubscription(subscriptionId, fundAmount);
     vrfCoordinatorAddr = VRFCoordinatorV2Mock.address;
   } else {
-      (vrfCoordinatorAddr = networkConfig[chainId].vrfCoordinator);
+    vrfCoordinatorAddr = networkConfig[chainId].vrfCoordinator;
     subscriptionId = BigNumber.from(process.env.VRF_SUBSCRIPTION_ID);
   }
 
@@ -55,6 +57,14 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     waitConfirmations: waitBlockConfirmations,
   });
 
+  if (chainId === 31337) {
+    //@ts-ignore
+    await VRFCoordinatorV2Mock.addConsumer(
+      subscriptionId,
+      vrfMintingContract.address
+    );
+  }
+
   if (
     (!developmentChains.includes(network.name) &&
       process.env.POLYGONSCAN_API_KEY) ||
@@ -70,3 +80,5 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 };
 
 export default func;
+
+func.tags = ["VRFMinting"];
