@@ -228,6 +228,19 @@ contract VRFMinting is
         }
     }
 
+    function walletOfOwner(address _owner)
+        public
+        view
+        returns (uint256[] memory)
+    {
+        uint256 ownerTokenCount = balanceOf(_owner);
+        uint256[] memory tokenIds = new uint256[](ownerTokenCount);
+        for (uint256 i; i < ownerTokenCount; i++) {
+            tokenIds[i] = tokenOfOwnerByIndex(_owner, i);
+        }
+        return tokenIds;
+    }
+
     function tokenURI(uint256 _tokenId)
         public
         view
@@ -255,6 +268,10 @@ contract VRFMinting is
                     )
                 )
                 : "";
+    }
+
+    function _baseURI() internal view virtual override returns (string memory) {
+        return uriPrefix;
     }
 
     function withdraw_single() public onlyOwner nonReentrant {

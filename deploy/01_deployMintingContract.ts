@@ -66,11 +66,10 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   }
 
   if (
-    (!developmentChains.includes(network.name) &&
-      process.env.POLYGONSCAN_API_KEY) ||
-    process.env.ETHERSCAN_API_KEY
+    !developmentChains.includes(network.name) &&
+    (process.env.POLYGONSCAN_API_KEY || process.env.ETHERSCAN_API_KEY)
   ) {
-    log("Verifying...", process.env.POLYGONSCAN_API_KEY);
+    log("Verifying...");
     await verify(
       vrfMintingContract.address,
       args,
