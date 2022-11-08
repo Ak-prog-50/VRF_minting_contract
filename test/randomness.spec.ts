@@ -33,10 +33,6 @@ describe("Test Randomness Request & Recieve", function () {
       vrfMinting,
       "RandomnessRequestSent"
     );
-    // const requestId = await vrfMinting.addressToRequestId(owner.address);
-    // console.log("requestId", requestId);
-    // console.log(await vrfMinting.requestIdToRequestStatus(requestId));
-    // console.log(await vrfMinting.getRandomnessRequestState(owner.address));
   });
 
   it("Should request randomness and get a result", async function () {
@@ -45,17 +41,14 @@ describe("Test Randomness Request & Recieve", function () {
     if (!txReceipt.events) return;
     //TODO: get the requestId from the event
     const requestId = await vrfMinting.addressToRequestId(owner.address);
-    // console.log("requestId", requestId);
 
     // simulate callback from the oracle network
     await expect(
       vrfCoordinatorV2Mock.fulfillRandomWords(requestId, vrfMinting.address)
     ).to.emit(vrfMinting, "RandomnessRequestFulfilled");
-    // console.log(await vrfMinting.requestIdToRequestStatus(requestId));
     const randomnessRequestState = await vrfMinting.getRandomnessRequestState(
       owner.address
     );
-    // console.log(randomnessRequestState[2]);
     expect(randomnessRequestState[0]).to.equal(true);
   });
 
@@ -68,7 +61,6 @@ describe("Test Randomness Request & Recieve", function () {
         try {
           expect(randomnessRequestState[0]).to.equal(true);
           expect(randomnessRequestState[1]).to.equal(true);
-          // console.log(randomnessRequestState[2]); // 78541660797044910968829902406342334108369226379826116161446442989268089806461
 
           resolve(true);
         } catch (e) {
@@ -85,11 +77,9 @@ describe("Test Randomness Request & Recieve", function () {
     for (let i = 0; i < 3; i++) {
       await vrfMinting.requestRandomness();
       const requestId2 = await vrfMinting.addressToRequestId(owner.address);
-      // console.log(`requestId${i}`, requestId2);
       vrfCoordinatorV2Mock.fulfillRandomWords(requestId2, vrfMinting.address);
       const randomnessRequestState2 =
         await vrfMinting.getRandomnessRequestState(owner.address);
-      // console.log(randomnessRequestState2[2], "\n");
       expect(randomnessRequestState2[0]).to.equal(true);
       expect(randomnessRequestState2[1]).to.equal(true);
     }
